@@ -31,11 +31,3 @@ while True:
 with open(FILE, "w") as file:
     json.dump(positions, file, indent=4)
 print(f"{len(positions)} positions saved to {FILE}")
-posiciones={
-    "posicion1":posicion1,
-    "posicion2":posicion2
-}
-
-with open ("posiciones.json","w") as fichero:
-    json.dump(posiciones,fichero, indent=4)
-print("posiciones guardadas en posiciones.json")

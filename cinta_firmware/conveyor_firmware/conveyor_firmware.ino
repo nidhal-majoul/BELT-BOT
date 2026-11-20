@@ -1,41 +1,16 @@
-/*
-  conveyor_firmware.ino
-  ---------------------
-  Arduino UNO firmware for the conveyor belt.
-  The Arduino only OBEYS commands. All the decisions (for example,
-  stopping when the camera sees a piece) are taken by Python on the PC.
 
-  Serial: 9600 baud, one command per line (ends with '\n').
-
-  Commands (case-insensitive):
-    START        -> start the belt
-    STOP         -> stop the belt
-    CW           -> clockwise direction
-    CCW          -> counter-clockwise direction
-    SPEED <n>    -> set speed 0..255 (e.g. "SPEED 150")
-    STATUS       -> ask for the current state
-
-  Replies:
-    READY                 -> sent once at startup
-    OK <command>          -> command accepted
-    STATUS ON|OFF CW|CCW <speed>
-    ERROR <reason>        -> wrong command
-*/
-
-// ---- Pins (from the conveyor wiring sheet) ----
 const int PIN_DIR = 8;   // PHASE  -> direction
 const int PIN_PWM = 9;   // PWM    -> speed
 const int PIN_EN  = 10;  // NSLEEP -> turn the motor driver on/off
 
-// If "CW" makes the belt turn the wrong way, change HIGH to LOW here.
 const int CLOCKWISE_LEVEL = HIGH;
 
-// ---- Conveyor state ----
+// Conveyor state
 bool running   = false;
 bool clockwise = true;
 int  speed     = 150;
 
-// Applies the current state (running / speed) to the motor
+// Appling the current state 
 void applyMotor() {
   if (running) {
     digitalWrite(PIN_EN, HIGH);
@@ -46,7 +21,7 @@ void applyMotor() {
   }
 }
 
-// Changes the direction safely (brakes first)
+// Changes the direction 
 void setDirection(bool newClockwise) {
   if (newClockwise == clockwise) return;  // already going that way
   analogWrite(PIN_PWM, 0);                // brake before reversing
