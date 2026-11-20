@@ -2,8 +2,8 @@
   conveyor_firmware.ino
   ---------------------
   Arduino UNO firmware for the conveyor belt.
-  The Arduino only OBEYS commands and REPORTS when a piece arrives.
-  All the decisions are taken by Python on the PC.
+  The Arduino only OBEYS commands. All the decisions (for example,
+  stopping when the camera sees a piece) are taken by Python on the PC.
 
   Serial: 9600 baud, one command per line (ends with '\n').
 
@@ -19,24 +19,21 @@
     READY                 -> sent once at startup
     OK <command>          -> command accepted
     STATUS ON|OFF CW|CCW <speed>
-    PIECE                 -> a piece has just arrived at the sensor
     ERROR <reason>        -> wrong command
 */
 
 // ---- Pins (from the conveyor wiring sheet) ----
-const int PIN_DIR    = 8;   // PHASE  -> direction
-const int PIN_PWM    = 9;   // PWM    -> speed
-const int PIN_EN     = 10;  // NSLEEP -> turn the motor driver on/off
-const int PIN_SENSOR = 2;   // infrared sensor signal
+const int PIN_DIR = 8;   // PHASE  -> direction
+const int PIN_PWM = 9;   // PWM    -> speed
+const int PIN_EN  = 10;  // NSLEEP -> turn the motor driver on/off
 
 // If "CW" makes the belt turn the wrong way, change HIGH to LOW here.
 const int CLOCKWISE_LEVEL = HIGH;
 
 // ---- Conveyor state ----
-bool running        = false;
-bool clockwise      = true;
-int  speed          = 150;
-bool pieceBefore    = false;  // so we report only when the piece ARRIVES
+bool running   = false;
+bool clockwise = true;
+int  speed     = 150;
 
 // Applies the current state (running / speed) to the motor
 void applyMotor() {
@@ -115,7 +112,6 @@ void setup() {
   pinMode(PIN_DIR, OUTPUT);
   pinMode(PIN_PWM, OUTPUT);
   pinMode(PIN_EN, OUTPUT);
-  pinMode(PIN_SENSOR, INPUT_PULLUP);      // the sensor gives LOW when it detects
 
   digitalWrite(PIN_DIR, CLOCKWISE_LEVEL);
   applyMotor();                           // starts stopped
@@ -126,18 +122,9 @@ void setup() {
 }
 
 void loop() {
-  // 1) Commands coming from the PC
+  // Commands coming from the PC
   if (Serial.available() > 0) {
     String command = Serial.readStringUntil('\n');
     processCommand(command);
   }
-
-  // 2) Sensor: report only at the moment the piece appears
-  bool pieceNow = (digitalRead(PIN_SENSOR) == LOW);
-  if (pieceNow && !pieceBefore) {
-    Serial.println("PIECE");
-  }
-  pieceBefore = pieceNow;
-
-  delay(10);
 }
