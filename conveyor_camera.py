@@ -3,9 +3,9 @@ from conveyor import Conveyor
 from piece_detector import PieceDetector
 
 # settings, change them for your setup
-CONVEYOR_PORT = "COM5"       # port of the arduino (the robot is in another COM)
-CAMERA_INDEX = 1             # 0 is the laptop webcam, 1 should be the belt camera
-ROI = (300, 200, 120, 120)   # x, y, w, h -> the zone where the piece has to stop
+CONVEYOR_PORT = "COM3"       
+CAMERA_INDEX = 1            
+ROI = (300, 100, 120, 220)   # x, y, w, h -> the zone where the piece has to stop
 
 conveyor = Conveyor(CONVEYOR_PORT)
 detector = PieceDetector(CAMERA_INDEX, ROI)

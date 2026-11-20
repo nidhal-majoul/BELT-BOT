@@ -10,12 +10,12 @@ class Conveyor:
     MAX_SPEED = 255
     SPEED_STEP = 25  # how much the speed goes up/down each time
 
-    def __init__(self, port="COM5", baudrate=9600):
-        # open the port of the arduino (look the COM in arduino IDE -> tools -> port)
+    def __init__(self, port="COM3", baudrate=9600):
+        
         self._serial = serial.Serial(port, baudrate, timeout=1)
-        # when we open the port the arduino restarts, so we wait for READY
+        # when we open the port the arduino restarts so we wait for READY
         self._wait_for_ready()
-        # we save the state here too, it starts like the arduino
+        # we save the state here too it starts like the arduino
         self._running = False
         self._clockwise = True
         self._speed = 150
@@ -26,7 +26,7 @@ class Conveyor:
             line = self._serial.readline().decode(errors="ignore").strip()
             if line == "READY":
                 return
-        # if after 5 seconds nothing arrives, probably the COM is wrong
+        # if after 5 seconds nothing arrives probably the COM is wrong
         raise RuntimeError("The Arduino did not answer READY. Check the COM port.")
 
     def _send(self, command):
@@ -83,7 +83,7 @@ class Conveyor:
 
 if __name__ == "__main__":
     # small test without the camera: 3 sec one way, 3 sec the other way and stop
-    conveyor = Conveyor("COM5")
+    conveyor = Conveyor("COM3")
     print(conveyor)
     conveyor.start()
     print(conveyor)

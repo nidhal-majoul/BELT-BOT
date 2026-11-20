@@ -1,19 +1,17 @@
-import cv2  # pip install opencv-python
+import cv2 
 
 
 # class to know if there is a piece in one zone of the camera image
-# idea: we take a photo of the zone with the belt empty, and then we compare
-# every new frame with that photo. if a lot of pixels change -> there is a piece
 class PieceDetector:
 
-    def __init__(self, camera_index, roi, threshold=0.15):
+    def __init__(self, camera_index, roi, threshold=0.22):
         self._camera = cv2.VideoCapture(camera_index)
         if not self._camera.isOpened():
             raise RuntimeError(f"Could not open camera {camera_index}")
         self._roi = roi              # the zone (x, y, w, h) in pixels
         self._threshold = threshold  # 0.15 = if more than 15% changes we say piece
-        self._reference = None       # photo of the empty zone (we fill it in calibrate)
-        self.last_change = 0.0       # last % we measured, to see it on screen
+        self._reference = None       # photo of the empty zone
+        self.last_change = 0.0       
 
     def read_frame(self):
         ok, frame = self._camera.read()
@@ -22,16 +20,14 @@ class PieceDetector:
         return frame
 
     def _crop_gray(self, frame):
-        # we cut only the zone, put it in grey and blur it a little
-        # (the blur removes small noise of the camera)
+        # we cut only the zone
         x, y, w, h = self._roi
         zone = frame[y:y + h, x:x + w]
         gray = cv2.cvtColor(zone, cv2.COLOR_BGR2GRAY)
         return cv2.GaussianBlur(gray, (5, 5), 0)
 
     def calibrate(self):
-        # IMPORTANT: the belt has to be empty here
-        # we skip some frames first because the camera needs time to adjust the light
+        # the belt has to be empty here
         for _ in range(10):
             frame = self.read_frame()
         self._reference = self._crop_gray(frame)
