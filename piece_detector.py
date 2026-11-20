@@ -4,7 +4,7 @@ import cv2
 # class to know if there is a piece in one zone of the camera image
 class PieceDetector:
 
-    def __init__(self, camera_index, roi, threshold=0.22):
+    def __init__(self, camera_index, roi, threshold=0.23):
         self._camera = cv2.VideoCapture(camera_index)
         if not self._camera.isOpened():
             raise RuntimeError(f"Could not open camera {camera_index}")

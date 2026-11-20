@@ -43,6 +43,16 @@ class Arm:
         self._mc.power_on()
         time.sleep(2)
 
+    def open_gripper(self,opening=50, speed=50):
+        # 0 = open the gripper
+        self._mc.set_gripper_value(opening, speed)
+        time.sleep(1.5)  # we wait so the gripper finishes
+
+    def close_gripper(self, speed=50):
+        # 1 = close the gripper (to catch the piece)
+        self._mc.set_gripper_state(1, speed)
+        time.sleep(1.5)
+
 
 if __name__ == "__main__":
     robot = Arm()
