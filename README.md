@@ -148,14 +148,8 @@ Upload `firmware/conveyor_firmware/conveyor_firmware.ino` to the Arduino UNO wit
 | `EXTRA_TIME` | `src/pick_and_place.py` | seconds the belt keeps moving after the detection |
 | `opening` | `Arm.open_gripper()` | how much the gripper opens (0–100) |
 
-<<<<<<< HEAD
-## Next steps
 
-- Sort the pieces by shape or colour into different boxes.
-- Pick the piece wherever it is on the belt (camera-to-robot calibration).
-=======
 
->>>>>>> 150b6933865230fa8e3ad5fa1734e2797705aecb
 
 ## Author
 
