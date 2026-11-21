@@ -1,7 +1,7 @@
 import json
 import os
 
-# positions.json is next to this file, so it works from any folder
+
 DEFAULT_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "positions.json")
 
 

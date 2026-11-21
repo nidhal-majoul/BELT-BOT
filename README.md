@@ -40,12 +40,17 @@ The Arduino only **obeys commands**. All the decisions are taken in Python.
 ```
 .
 ├── src/
+<<<<<<< HEAD
 │   ├── robot_arm.py         # RobotArm: abstract class shared by the real and virtual arm
 │   ├── arm.py               # Arm(RobotArm): control of the real myCobot (angles, gripper)
 │   ├── virtual_arm.py       # VirtualArm(RobotArm): the myCobot simulated in MuJoCo
 │   ├── arm_coords.py        # ArmCoords(Arm): extra control by x, y, z coordinates
 │   ├── position_manager.py  # PositionManager: saves and loads positions.json
 │   ├── twin_app.py          # digital twin interface (real / virtual)
+=======
+│   ├── arm.py               # Arm: control of the real myCobot (angles, gripper)
+│   ├── arm_coords.py        # ArmCoords(Arm): extra control by x, y, z coordinates
+>>>>>>> 150b6933865230fa8e3ad5fa1734e2797705aecb
 │   ├── conveyor.py          # Conveyor: sends commands to the Arduino over serial
 │   ├── piece_detector.py    # PieceDetector: detects a piece in the ROI with OpenCV
 │   ├── record.py            # teach positions by moving the arm by hand
@@ -53,8 +58,11 @@ The Arduino only **obeys commands**. All the decisions are taken in Python.
 │   ├── conveyor_camera.py   # belt + camera: the belt stops when a piece arrives
 │   ├── pick_and_place.py    # full cell: belt + camera + robot
 │   └── positions.json       # recorded positions (joint angles)
+<<<<<<< HEAD
 ├── models/
 │   └── mycobot280/          # 3D model of the myCobot 280 for MuJoCo
+=======
+>>>>>>> 150b6933865230fa8e3ad5fa1734e2797705aecb
 ├── firmware/
 │   └── conveyor_firmware/
 │       └── conveyor_firmware.ino   # Arduino firmware of the belt
@@ -67,14 +75,19 @@ The Arduino only **obeys commands**. All the decisions are taken in Python.
 
 | Class | Responsibility |
 |---|---|
+<<<<<<< HEAD
 | `RobotArm` | abstract class: what every arm must do (read/move angles, gripper, motors) |
 | `Arm` | the real myCobot: connect over USB, move by joint angles, open/close the gripper, release/lock the motors |
 | `VirtualArm` | the same robot simulated in MuJoCo, with exactly the same methods |
 | `PositionManager` | save, load and delete named positions in `positions.json` |
+=======
+| `Arm` | connect to the robot, move by joint angles, open/close the gripper, release/lock the motors |
+>>>>>>> 150b6933865230fa8e3ad5fa1734e2797705aecb
 | `ArmCoords` | inherits from `Arm` and adds movements by coordinates |
 | `Conveyor` | start, stop, direction and speed of the belt through the serial port |
 | `PieceDetector` | calibrate with the empty belt and tell if there is a piece in the zone |
 
+<<<<<<< HEAD
 Positions are saved as **joint angles** (not coordinates), so the same file works for the real and the virtual robot.
 
 ## Digital twin interface
@@ -85,6 +98,9 @@ Positions are saved as **joint angles** (not coordinates), so the same file work
 - **REAL mode:** connect to the real myCobot. Release the motors, move the arm by hand and the virtual arm copies it live.
 - Only one mode can run at a time, and the window never freezes: the robot works in its own thread.
 - The interface only talks to `RobotArm`, so it doesn't care if the arm is real or virtual (polymorphism).
+=======
+Positions are saved as **joint angles** (not coordinates), so they can be reused later by a virtual robot.
+>>>>>>> 150b6933865230fa8e3ad5fa1734e2797705aecb
 
 ## Serial protocol (PC ↔ Arduino)
 
@@ -131,10 +147,14 @@ Upload `firmware/conveyor_firmware/conveyor_firmware.ino` to the Arduino UNO wit
 | `EXTRA_TIME` | `src/pick_and_place.py` | seconds the belt keeps moving after the detection |
 | `opening` | `Arm.open_gripper()` | how much the gripper opens (0–100) |
 
+<<<<<<< HEAD
 ## Next steps
 
 - Sort the pieces by shape or colour into different boxes.
 - Pick the piece wherever it is on the belt (camera-to-robot calibration).
+=======
+
+>>>>>>> 150b6933865230fa8e3ad5fa1734e2797705aecb
 
 ## Author
 
