@@ -1,0 +1,96 @@
+<mujoco model="mycobot280_digital_twin">
+  <compiler angle="radian" meshdir="assets"/>
+  <option timestep="0.002" gravity="0 0 -9.81"/>
+  <visual><headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3"/><global offwidth="1280" offheight="720"/></visual>
+  <default>
+    <default class="visual"><geom contype="0" conaffinity="0" density="0" group="1"/></default>
+    <default class="finger"><geom contype="1" conaffinity="1" friction="1.5 0.05 0.01" density="500"/></default>
+    <joint damping="2" armature="0.01"/>
+  </default>
+  <asset>
+    <mesh name="G_base" content_type="model/stl" file="G_base.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="joint1" content_type="model/stl" file="joint1.stl"/>
+    <mesh name="joint2" content_type="model/stl" file="joint2.stl"/>
+    <mesh name="joint3" content_type="model/stl" file="joint3.stl"/>
+    <mesh name="joint4" content_type="model/stl" file="joint4.stl"/>
+    <mesh name="joint5" content_type="model/stl" file="joint5.stl"/>
+    <mesh name="joint6" content_type="model/stl" file="joint6.stl"/>
+    <mesh name="joint7" content_type="model/stl" file="joint7.stl"/>
+  
+    <material name="white" rgba="0.92 0.92 0.92 1"/>
+    <material name="grey" rgba="0.45 0.45 0.48 1"/>
+    <material name="base" rgba="0.15 0.35 0.75 1"/>
+    <texture name="sky" type="skybox" builtin="gradient" rgb1="0.22 0.25 0.29" rgb2="0.06 0.07 0.09" width="256" height="256"/>
+    <texture name="grid" type="2d" builtin="checker" rgb1="0.82 0.84 0.86" rgb2="0.74 0.76 0.78" width="512" height="512"/>
+    <material name="floor" texture="grid" texrepeat="8 8"/>
+  </asset>
+  <worldbody>
+    <light pos="0.3 -0.3 1.2" dir="-0.2 0.2 -1" diffuse="0.8 0.8 0.8"/>
+    <geom name="floor" type="plane" size="1 1 0.05" material="floor" pos="0 0 -0.03"/>
+    <body name="look" pos="0 0 0.2"/>
+    <camera name="front" pos="0.66 -0.56 0.46" mode="targetbody" target="look"/>
+    
+    <body name="g_base">
+      <geom pos="0 0 -0.03" quat="0.707105 0 0 0.707108" type="mesh" class="visual" mesh="G_base" material="base"/>
+      <body gravcomp="1" name="joint1">
+        <geom quat="0.707105 0 0 -0.707108" type="mesh" class="visual" mesh="joint1" material="white"/>
+        <body gravcomp="1" name="joint2" pos="0 0 0.13156">
+<inertial pos="0 0 0" mass="0.15" diaginertia="0.0002 0.0002 0.0002"/>
+          <joint name="J1" range="-2.9321 2.9321"/>
+          <geom pos="0 0 -0.06096" quat="0.707105 0 0 -0.707108" type="mesh" class="visual" mesh="joint2" material="white"/>
+          <body gravcomp="1" name="joint3" quat="0.499998 0.500002 0.5 -0.5">
+<inertial pos="0 0 0" mass="0.15" diaginertia="0.0002 0.0002 0.0002"/>
+            <joint name="J2" range="-2.4434 2.4434"/>
+            <geom pos="0 0 0.03256" quat="0.707105 0 -0.707108 0" type="mesh" class="visual" mesh="joint3" material="white"/>
+            <body gravcomp="1" name="joint4" pos="-0.1104 0 0">
+<inertial pos="0 0 0" mass="0.15" diaginertia="0.0002 0.0002 0.0002"/>
+              <joint name="J3" range="-2.6179 2.6179"/>
+              <geom pos="0 0 0.03056" quat="0.707105 0 -0.707108 0" type="mesh" class="visual" mesh="joint4" material="white"/>
+              <body gravcomp="1" name="joint5" pos="-0.096 0 0.06462" quat="0.707105 0 0 -0.707108">
+<inertial pos="0 0 0" mass="0.15" diaginertia="0.0002 0.0002 0.0002"/>
+                <joint name="J4" range="-2.6179 2.6179"/>
+                <geom pos="0 0 -0.03356" quat="0.707105 -0.707108 0 0" type="mesh" class="visual" mesh="joint5" material="white"/>
+                <body gravcomp="1" name="joint6" pos="0 -0.07318 0" quat="0.499998 0.5 -0.5 0.500002">
+<inertial pos="0 0 0" mass="0.15" diaginertia="0.0002 0.0002 0.0002"/>
+                  <joint name="J5" range="-2.7052 2.7925"/>
+                  <geom pos="0 0 -0.038" quat="1 0 0 0" type="mesh" class="visual" mesh="joint6" material="white"/>
+                  <body gravcomp="1" name="joint6_flange" pos="0 0.0456 0" quat="0.707105 -0.707108 0 0">
+<inertial pos="0 0 0" mass="0.15" diaginertia="0.0002 0.0002 0.0002"/>
+                    <joint name="J6" range="-3.14 3.14159"/>
+                    <geom pos="0 0 -0.012" quat="1 0 0 0" type="mesh" class="visual" mesh="joint7" material="grey"/>
+                    <body gravcomp="1" name="gripper" pos="0 0 0.002">
+<inertial pos="0 0 0" mass="0.15" diaginertia="0.0002 0.0002 0.0002"/>
+                      <geom type="box" size="0.022 0.016 0.022" pos="0 0 0.022" material="white" class="visual"/>
+                      <site name="tcp" pos="0 0 0.085" size="0.004" rgba="0 0 0 0"/>
+                      <body gravcomp="1" name="finger_left" pos="0 0.012 0.044">
+<inertial pos="0 0 0.02" mass="0.02" diaginertia="0.00001 0.00001 0.00001"/>
+                        <joint name="finger_left" type="slide" axis="0 1 0" range="0 0.018"/>
+                        <geom type="box" size="0.010 0.004 0.020" pos="0 0 0.020" material="grey" class="finger"/>
+                      </body>
+                      <body gravcomp="1" name="finger_right" pos="0 -0.012 0.044">
+<inertial pos="0 0 0.02" mass="0.02" diaginertia="0.00001 0.00001 0.00001"/>
+                        <joint name="finger_right" type="slide" axis="0 -1 0" range="0 0.018"/>
+                        <geom type="box" size="0.010 0.004 0.020" pos="0 0 0.020" material="grey" class="finger"/>
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  
+  </worldbody>
+  <actuator>
+    <position name="A1" joint="J1" kp="80" ctrlrange="-3.14 3.14"/>
+    <position name="A2" joint="J2" kp="80" ctrlrange="-3.14 3.14"/>
+    <position name="A3" joint="J3" kp="80" ctrlrange="-3.14 3.14"/>
+    <position name="A4" joint="J4" kp="80" ctrlrange="-3.14 3.14"/>
+    <position name="A5" joint="J5" kp="80" ctrlrange="-3.14 3.14"/>
+    <position name="A6" joint="J6" kp="80" ctrlrange="-3.14 3.14"/>
+    <position name="grip_left" joint="finger_left" kp="200" ctrlrange="0 0.018"/>
+    <position name="grip_right" joint="finger_right" kp="200" ctrlrange="0 0.018"/>
+  </actuator>
+</mujoco>

@@ -1,9 +1,10 @@
 from pymycobot import MyCobot280
 import time  # for pauses (sleep)
+from robot_arm import RobotArm
 
 
-class Arm:
-    HOME_POSITION = [0, 0, 0, 0, 0, 0]  # arm straight up
+# the REAL myCobot, it follows the same rules as the virtual one (RobotArm)
+class Arm(RobotArm):
 
     def __init__(self, port="COM4", baudrate=115200):
         # connect to the robot through the COM port
@@ -31,9 +32,6 @@ class Arm:
         self._mc.send_angle(joint, angle, speed)
         time.sleep(4)
 
-    def go_home(self):
-        self.move_angles(self.HOME_POSITION, 20)
-
     def release_motors(self):
         # the arm goes limp so we can move it by hand
         self._mc.release_all_servos()
@@ -52,6 +50,13 @@ class Arm:
         # 1 = close the gripper (to catch the piece)
         self._mc.set_gripper_state(1, speed)
         time.sleep(1.5)
+
+    def close(self):
+        # close the port so we can connect again later without restarting
+        if hasattr(self._mc, "close"):
+            self._mc.close()
+        else:
+            self._mc._serial_port.close()
 
 
 if __name__ == "__main__":

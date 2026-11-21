@@ -1,3 +1,4 @@
+import os
 import cv2
 import json
 import time
@@ -10,13 +11,14 @@ ARM_PORT = "COM4"
 CONVEYOR_PORT = "COM3"
 CAMERA_INDEX = 1
 ROI = (300, 100, 120, 220)
-POSITIONS_FILE = "positions.json"
+# positions.json is next to this file, so it works from any folder
+POSITIONS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "positions.json")
 # seconds the belt keeps moving after the camera sees the piece
 # (the push, so the piece goes more to the centre and the robot catches it well)
 # if the piece stops too early -> bigger number, if it goes too far -> smaller
-EXTRA_TIME = 0.3
+EXTRA_TIME = 0.4
 
-# names of the positions we need (record them before with record.py)
+# names of the positions we need
 NEEDED = ["above_pick", "pick", "above_box", "box"]
 
 

@@ -1,0 +1,7 @@
+pymycobot
+pyserial
+opencv-python
+numpy
+mujoco
+customtkinter
+pillow
