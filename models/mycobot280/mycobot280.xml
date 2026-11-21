@@ -48,8 +48,16 @@
       <geom type="box" size="0.003 0.07 0.035" pos="0.09 0 0.005" material="cardboard" class="visual"/>
       <geom type="box" size="0.003 0.07 0.035" pos="-0.09 0 0.005" material="cardboard" class="visual"/>
     </body>
+    <!-- camera on a stand, looking down at the end of the belt (like the real one) -->
+    <body name="camera_stand" pos="-0.30 -0.10 0">
+      <geom type="box" size="0.05 0.05 0.004" pos="0 0 -0.026" material="dark" class="visual"/>
+      <geom type="cylinder" size="0.008 0.19" pos="0 0 0.16" material="dark" class="visual"/>
+      <geom type="box" size="0.006 0.06 0.006" pos="0 0.055 0.35" material="dark" class="visual"/>
+      <geom type="box" size="0.03 0.012 0.01" pos="0 0.115 0.345" material="dark" class="visual"/>
+    </body>
+    <camera name="belt_cam" pos="-0.30 0.015 0.33" xyaxes="1 0 0 0 1 0" fovy="45"/>
     <!-- the piece: a mocap body, the program decides where it is -->
-    <body name="piece" mocap="true" pos="-0.48 0.015 0.0195">
+    <body name="piece" mocap="true" pos="0 0 -1">
       <geom type="box" size="0.0225 0.0225 0.0225" material="piece" class="visual"/>
     </body>
     

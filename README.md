@@ -46,6 +46,7 @@ The Arduino only **obeys commands**. All the decisions are taken in Python.
 │   ├── virtual_arm.py       # VirtualArm(RobotArm): the myCobot simulated in MuJoCo
 │   ├── arm_coords.py        # ArmCoords(Arm): extra control by x, y, z coordinates
 │   ├── position_manager.py  # PositionManager: saves and loads positions.json
+│   ├── virtual_camera.py    # VirtualPieceDetector(PieceDetector): detection with the simulated camera
 │   ├── twin_app.py          # digital twin interface (real / virtual)
 =======
 │   ├── arm.py               # Arm: control of the real myCobot (angles, gripper)
@@ -95,7 +96,7 @@ Positions are saved as **joint angles** (not coordinates), so the same file work
 `python src/twin_app.py` opens a window with a 3D myCobot built from the official Elephant Robotics model.
 
 - **VIRTUAL mode:** move the simulated arm with one slider per joint, save positions and replay them.
-- **Pick and place cycle:** in the simulation, a piece comes on the virtual conveyor, the arm picks it with the recorded positions and drops it in the box.
+- **Pick and place cycle:** in the simulation, a piece comes on the virtual conveyor, a virtual camera detects it with the same `PieceDetector` used with the real camera, the belt stops and the arm picks it and drops it in the box.
 - **REAL mode:** connect to the real myCobot. Release the motors, move the arm by hand and the virtual arm copies it live.
 - Only one mode can run at a time, and the window never freezes: the robot works in its own thread.
 - The interface only talks to `RobotArm`, so it doesn't care if the arm is real or virtual (polymorphism).

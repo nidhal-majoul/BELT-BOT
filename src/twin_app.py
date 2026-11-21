@@ -1,8 +1,10 @@
 import queue
 import threading
+import cv2
 import customtkinter as ctk   # pip install customtkinter
 from PIL import Image          # pip install pillow
 from virtual_arm import VirtualArm, ArmView
+from virtual_camera import VirtualPieceDetector, world_to_pixel
 from position_manager import PositionManager
 
 # settings
@@ -24,6 +26,8 @@ class RobotWorker(threading.Thread):
         self.twin = None              # the virtual myCobot (it's always the 3D view)
         self.real = None              # the real myCobot, only in REAL mode
         self.slider_angles = None     # last angles asked by the sliders
+        self.piece_detected = threading.Event()  # the window sets it when the camera sees the piece
+        self.cam_ready = threading.Event()       # the window sets it when the camera is calibrated
 
     def submit(self, job):
         self._jobs.put(job)
@@ -94,6 +98,12 @@ class TwinApp(ctk.CTk):
         self._build()
         self._refresh_positions()
         self.arm_view = ArmView(VIEW_W, VIEW_H)   # draws the 3D view (in this thread)
+        # the camera over the virtual belt uses the same detector as the real one
+        self.cam_detector = VirtualPieceDetector(threshold=0.15)
+        self._roi_ready = False
+        self._belt_watch = False      # True while the belt is running and we look for the piece
+        self._armed = False
+        self._last_state = None
         self.worker.start()
         self.after(33, self._read_queue)
 
@@ -304,14 +314,39 @@ class TwinApp(ctk.CTk):
             return
         p = {n: self.positions.get(n) for n in self.positions.names()}
         real = self._is_real()
+        extra_time = 0.3
+        if not real:
+            # the detection zone (ROI) is just before the point where the robot picks
+            stop_x = self.arm_view.tcp_for(p["pick"])[0]
+            roi_start, roi_end = stop_x - 0.025, stop_x + 0.025
+            piece_top = VirtualArm.BELT_TOP + 2 * VirtualArm.PIECE_HALF
+            w_cam, h_cam = self.arm_view.cam_size
+            cam = self.arm_view.cam_pos
+            fov = self.arm_view.cam_fovy
+            u1, v1 = world_to_pixel((roi_start, VirtualArm.BELT_Y + 0.03, piece_top), cam, fov, w_cam, h_cam)
+            u2, v2 = world_to_pixel((roi_end, VirtualArm.BELT_Y - 0.03, piece_top), cam, fov, w_cam, h_cam)
+            self.cam_detector.set_roi((min(u1, u2), min(v1, v2), abs(u2 - u1), abs(v2 - v1)))
+            self._roi_ready = True
+            # time the belt keeps moving after the detection so the piece stops under the gripper
+            centre_when_detected = roi_start + 0.006 - VirtualArm.PIECE_HALF
+            extra_time = max(0.0, (stop_x - centre_when_detected) / VirtualArm.BELT_SPEED)
 
         def cycle(w):
             arm = w.active()
             if not real:
-                # in the simulation the belt brings a piece to the pick point
-                stop_x = w.twin.tcp_for(p["pick"])[0]
-                self._ui.put(("log", "Belt: a new piece is coming"))
-                w.twin.new_piece(stop_x)
+                # 1) a piece appears at the start of the belt
+                w.piece_detected.clear()
+                w.cam_ready.clear()
+                w.twin.place_piece_at_start()
+                # 2) the window calibrates the camera with the zone empty
+                self._ui.put(("calibrate_cam", None))
+                w.cam_ready.wait(5)
+                # 3) the belt runs until the camera detects the piece (+ the push)
+                self._ui.put(("log", "Belt running, camera watching..."))
+                if not w.twin.run_belt(w.piece_detected, extra_time=extra_time):
+                    self._ui.put(("log", "The camera didn't detect the piece"))
+                    return
+                self._ui.put(("log", "Camera: piece detected → belt stopped"))
             steps = [("open", None), ("move", "above_pick"), ("move", "pick"), ("close", None),
                      ("move", "above_pick"), ("move", "above_box"), ("move", "box"), ("open", None),
                      ("move", "above_box"), ("move", "home" if "home" in p else None)]
@@ -344,6 +379,15 @@ class TwinApp(ctk.CTk):
                 kind, value = self._ui.get_nowait()
                 if kind == "state":
                     frame = value                 # we only draw the newest state
+                elif kind == "calibrate_cam":
+                    if self._last_state is not None:
+                        self.arm_view.draw(self._last_state)
+                        cam = cv2.cvtColor(self.arm_view.draw_camera(), cv2.COLOR_RGB2BGR)
+                        self.cam_detector.give_frame(cam)
+                        self.cam_detector.calibrate()
+                    self._armed = False
+                    self._belt_watch = True
+                    self.worker.cam_ready.set()
                 elif kind == "angles":
                     self.lbl_angles.configure(text="Angles: " + "  ".join(f"{a:7.1f}" for a in value))
                     if self._is_real() or self._busy:
@@ -368,10 +412,37 @@ class TwinApp(ctk.CTk):
         except queue.Empty:
             pass
         if frame is not None:
+            self._last_state = frame
             image = self.arm_view.draw(frame)
+            image = self._add_camera_view(image)
             self._view_image = ctk.CTkImage(Image.fromarray(image), size=(VIEW_W, VIEW_H))
             self.view.configure(image=self._view_image, text="")
         self.after(33, self._read_queue)
+
+    def _add_camera_view(self, image):
+        # what the camera over the belt sees, in the top-right corner of the 3D view
+        cam = cv2.cvtColor(self.arm_view.draw_camera(), cv2.COLOR_RGB2BGR)
+        if self._roi_ready:
+            present = False
+            if self._belt_watch:
+                present = self.cam_detector.piece_present(cam)
+                if not present:
+                    self._armed = True
+                elif self._armed:
+                    # same logic as conveyor_camera.py: the piece entered the zone
+                    self._belt_watch = False
+                    self.worker.piece_detected.set()
+            else:
+                present = self.cam_detector.piece_present(cam) if self.cam_detector._reference is not None else False
+            self.cam_detector.draw(cam, present)
+        small = cv2.resize(cam, (240, 180))
+        small = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
+        image = image.copy()
+        x0, y0 = 10, 10
+        image[y0 - 2:y0 + 182, x0 - 2:x0 + 242] = (29, 205, 159)   # green border
+        image[y0:y0 + 180, x0:x0 + 240] = small
+        cv2.putText(image, "CAMERA", (x0 + 6, y0 + 172), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1)
+        return image
 
     def on_close(self):
         self.worker.stop_event.set()
