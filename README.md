@@ -147,7 +147,7 @@ Upload `firmware/conveyor_firmware/conveyor_firmware.ino` to the Arduino UNO wit
 | `EXTRA_TIME` | `src/pick_and_place.py` | seconds the belt keeps moving after the detection |
 | `opening` | `Arm.open_gripper()` | how much the gripper opens (0–100) |
 
-<<<<<<< HEAD
+
 
 
 ## Author
