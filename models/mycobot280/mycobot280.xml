@@ -20,6 +20,10 @@
     <material name="white" rgba="0.92 0.92 0.92 1"/>
     <material name="grey" rgba="0.45 0.45 0.48 1"/>
     <material name="base" rgba="0.15 0.35 0.75 1"/>
+    <material name="dark" rgba="0.12 0.12 0.13 1"/>
+    <material name="belt" rgba="0.08 0.35 0.18 1"/>
+    <material name="cardboard" rgba="0.72 0.56 0.38 1"/>
+    <material name="piece" rgba="0.95 0.88 0.45 1"/>
     <texture name="sky" type="skybox" builtin="gradient" rgb1="0.22 0.25 0.29" rgb2="0.06 0.07 0.09" width="256" height="256"/>
     <texture name="grid" type="2d" builtin="checker" rgb1="0.82 0.84 0.86" rgb2="0.74 0.76 0.78" width="512" height="512"/>
     <material name="floor" texture="grid" texrepeat="8 8"/>
@@ -27,8 +31,27 @@
   <worldbody>
     <light pos="0.3 -0.3 1.2" dir="-0.2 0.2 -1" diffuse="0.8 0.8 0.8"/>
     <geom name="floor" type="plane" size="1 1 0.05" material="floor" pos="0 0 -0.03"/>
-    <body name="look" pos="0 0 0.2"/>
-    <camera name="front" pos="0.66 -0.56 0.46" mode="targetbody" target="look"/>
+    <body name="look" pos="-0.17 0.08 0.06"/>
+    <camera name="front" pos="0.36 -0.62 0.52" mode="targetbody" target="look"/>
+    <!-- conveyor belt (only visual, the piece is moved by the program) -->
+    <body name="conveyor" pos="-0.34 0.015 0">
+      <geom type="box" size="0.17 0.045 0.0125" pos="0 0 -0.0165" material="dark" class="visual"/>
+      <geom type="box" size="0.165 0.034 0.001" pos="0 0 -0.003" material="belt" class="visual"/>
+      <geom type="cylinder" size="0.014 0.04" pos="0.165 0 -0.016" quat="0.7071 0.7071 0 0" material="dark" class="visual"/>
+      <geom type="cylinder" size="0.014 0.04" pos="-0.165 0 -0.016" quat="0.7071 0.7071 0 0" material="dark" class="visual"/>
+    </body>
+    <!-- cardboard box where the robot drops the pieces -->
+    <body name="box" pos="-0.10 0.25 0">
+      <geom type="box" size="0.09 0.07 0.002" pos="0 0 -0.028" material="cardboard" class="visual"/>
+      <geom type="box" size="0.09 0.003 0.035" pos="0 0.07 0.005" material="cardboard" class="visual"/>
+      <geom type="box" size="0.09 0.003 0.035" pos="0 -0.07 0.005" material="cardboard" class="visual"/>
+      <geom type="box" size="0.003 0.07 0.035" pos="0.09 0 0.005" material="cardboard" class="visual"/>
+      <geom type="box" size="0.003 0.07 0.035" pos="-0.09 0 0.005" material="cardboard" class="visual"/>
+    </body>
+    <!-- the piece: a mocap body, the program decides where it is -->
+    <body name="piece" mocap="true" pos="-0.48 0.015 0.0195">
+      <geom type="box" size="0.0225 0.0225 0.0225" material="piece" class="visual"/>
+    </body>
     
     <body name="g_base">
       <geom pos="0 0 -0.03" quat="0.707105 0 0 0.707108" type="mesh" class="visual" mesh="G_base" material="base"/>
@@ -58,9 +81,9 @@
 <inertial pos="0 0 0" mass="0.15" diaginertia="0.0002 0.0002 0.0002"/>
                     <joint name="J6" range="-3.14 3.14159"/>
                     <geom pos="0 0 -0.012" quat="1 0 0 0" type="mesh" class="visual" mesh="joint7" material="grey"/>
-                    <body gravcomp="1" name="gripper" pos="0 0 0.002">
+                    <body gravcomp="1" name="gripper" pos="0 0 0.016" zaxis="-0.68 0.73 0">
 <inertial pos="0 0 0" mass="0.15" diaginertia="0.0002 0.0002 0.0002"/>
-                      <geom type="box" size="0.022 0.016 0.022" pos="0 0 0.022" material="white" class="visual"/>
+                      <geom type="box" size="0.022 0.016 0.024" pos="0 0 0.024" material="white" class="visual"/>
                       <site name="tcp" pos="0 0 0.085" size="0.004" rgba="0 0 0 0"/>
                       <body gravcomp="1" name="finger_left" pos="0 0.012 0.044">
 <inertial pos="0 0 0.02" mass="0.02" diaginertia="0.00001 0.00001 0.00001"/>

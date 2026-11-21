@@ -169,6 +169,8 @@ class TwinApp(ctk.CTk):
 
         self.btn_play = ctk.CTkButton(right, text="▶  Play all positions", command=self._play_all)
         self.btn_play.pack(padx=12, pady=(10, 4), fill="x")
+        self.btn_cycle = ctk.CTkButton(right, text="⟳  Pick and place cycle", command=self._pick_and_place)
+        self.btn_cycle.pack(padx=12, pady=(0, 4), fill="x")
         self.btn_stop = ctk.CTkButton(right, text="■  Stop", fg_color="#a33", hover_color="#822", command=self._stop)
         self.btn_stop.pack(padx=12, pady=(0, 12), fill="x")
 
@@ -196,7 +198,7 @@ class TwinApp(ctk.CTk):
     def _update_buttons(self):
         idle = "normal" if not self._busy else "disabled"
         for b in (self.btn_home, self.btn_open, self.btn_close, self.btn_save, self.btn_go,
-                  self.btn_delete, self.btn_play):
+                  self.btn_delete, self.btn_play, self.btn_cycle):
             b.configure(state=idle)
         real_state = idle if self._is_real() else "disabled"
         self.btn_release.configure(state=real_state)
@@ -292,6 +294,43 @@ class TwinApp(ctk.CTk):
                 self._ui.put(("log", f"→ {name}"))
                 w.active().move_angles(self.positions.get(name))
         self._run(play, f"Playing {len(names)} positions")
+
+    def _pick_and_place(self):
+        # the same movement as pick_and_place.py, using the recorded positions
+        needed = ["above_pick", "pick", "above_box", "box"]
+        missing = [n for n in needed if n not in self.positions.names()]
+        if missing:
+            self._write(f"Missing positions: {missing}")
+            return
+        p = {n: self.positions.get(n) for n in self.positions.names()}
+        real = self._is_real()
+
+        def cycle(w):
+            arm = w.active()
+            if not real:
+                # in the simulation the belt brings a piece to the pick point
+                stop_x = w.twin.tcp_for(p["pick"])[0]
+                self._ui.put(("log", "Belt: a new piece is coming"))
+                w.twin.new_piece(stop_x)
+            steps = [("open", None), ("move", "above_pick"), ("move", "pick"), ("close", None),
+                     ("move", "above_pick"), ("move", "above_box"), ("move", "box"), ("open", None),
+                     ("move", "above_box"), ("move", "home" if "home" in p else None)]
+            for action, name in steps:
+                if w.stop_event.is_set():
+                    self._ui.put(("log", "Stopped"))
+                    return
+                if action == "open":
+                    arm.open_gripper()
+                elif action == "close":
+                    arm.close_gripper()
+                elif name is None:
+                    arm.go_home()
+                else:
+                    self._ui.put(("log", f"→ {name}"))
+                    arm.move_angles(p[name])
+            self._ui.put(("log", "Piece in the box ✓"))
+        self.worker.stop_event.clear()
+        self._run(cycle, "Pick and place cycle")
 
     def _stop(self):
         # the robot finishes the movement it's doing and then stops
