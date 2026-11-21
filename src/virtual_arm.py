@@ -22,6 +22,7 @@ class VirtualArm(RobotArm):
     BOX_CENTER = (-0.10, 0.25)
     BOX_HALF = (0.085, 0.065)
     BOX_FLOOR = -0.026
+    BELT_SPEED = 0.08    # metres per second
 
     def __init__(self, on_state=None):
         self._model = mujoco.MjModel.from_xml_path(MODEL_PATH)
@@ -31,7 +32,7 @@ class VirtualArm(RobotArm):
         self._tcp = mujoco.mj_name2id(self._model, mujoco.mjtObj.mjOBJ_SITE, "tcp")
         piece_body = mujoco.mj_name2id(self._model, mujoco.mjtObj.mjOBJ_BODY, "piece")
         self._piece = self._model.body_mocapid[piece_body]
-        self.piece_state = "on_belt"   # on_belt / held / in_box / dropped
+        self.piece_state = "hidden"    # hidden / on_belt / held / in_box / dropped
         mujoco.mj_forward(self._model, self._data)
 
     # ---------- small helpers ----------
@@ -118,6 +119,37 @@ class VirtualArm(RobotArm):
         mujoco.mj_forward(self._model, data)
         return data.site_xpos[self._tcp].copy()
 
+    def run_belt(self, detected, extra_time=0.3, timeout=12):
+        # a new piece comes on the belt and keeps moving until the camera
+        # detects it (the window sets the event "detected"), like the real cell
+        z = self.BELT_TOP + self.PIECE_HALF
+        pos = np.array([self.BELT_START_X, self.BELT_Y, z])
+        self.piece_state = "on_belt"
+        dt = 1 / self.FPS
+        stop_at = None
+        t = 0.0
+        while t < timeout:
+            if stop_at is None and detected.is_set():
+                stop_at = t + extra_time      # the push: a bit more and then stop
+            if stop_at is not None and t >= stop_at:
+                return True
+            pos[0] += self.BELT_SPEED * dt
+            if pos[0] > -0.18:                # end of the belt
+                return False
+            self._data.mocap_pos[self._piece] = pos
+            mujoco.mj_forward(self._model, self._data)
+            self._render()
+            time.sleep(dt)
+            t += dt
+        return False
+
+    def place_piece_at_start(self):
+        z = self.BELT_TOP + self.PIECE_HALF
+        self._data.mocap_pos[self._piece] = [self.BELT_START_X, self.BELT_Y, z]
+        self.piece_state = "on_belt"
+        mujoco.mj_forward(self._model, self._data)
+        self._render()
+
     def new_piece(self, stop_x=-0.255, seconds=2.5):
         # a new piece comes on the belt and stops where the robot picks it
         z = self.BELT_TOP + self.PIECE_HALF
@@ -151,11 +183,16 @@ class VirtualArm(RobotArm):
 # so it can draw in the window thread while VirtualArm moves in the robot thread
 class ArmView:
 
-    def __init__(self, width=640, height=480, camera="front"):
+    def __init__(self, width=640, height=480, camera="front", cam_size=(320, 240)):
         self._model = mujoco.MjModel.from_xml_path(MODEL_PATH)
         self._data = mujoco.MjData(self._model)
         self._renderer = mujoco.Renderer(self._model, height, width)
+        self._cam_renderer = mujoco.Renderer(self._model, cam_size[1], cam_size[0])
         self._camera = camera
+        self.cam_size = cam_size
+        cam_id = mujoco.mj_name2id(self._model, mujoco.mjtObj.mjOBJ_CAMERA, "belt_cam")
+        self.cam_pos = self._model.cam_pos[cam_id].copy()
+        self.cam_fovy = float(self._model.cam_fovy[cam_id])
 
     def draw(self, state):
         qpos, mocap_pos = state
@@ -165,5 +202,18 @@ class ArmView:
         self._renderer.update_scene(self._data, camera=self._camera)
         return self._renderer.render()               # RGB image
 
+    def draw_camera(self):
+        # what the camera over the belt sees (uses the state of the last draw)
+        self._cam_renderer.update_scene(self._data, camera="belt_cam")
+        return self._cam_renderer.render()
+
+    def tcp_for(self, angles):
+        data = mujoco.MjData(self._model)
+        data.qpos[:6] = np.radians(angles)
+        mujoco.mj_forward(self._model, data)
+        tcp = mujoco.mj_name2id(self._model, mujoco.mjtObj.mjOBJ_SITE, "tcp")
+        return data.site_xpos[tcp].copy()
+
     def close(self):
         self._renderer.close()
+        self._cam_renderer.close()
